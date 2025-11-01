@@ -1,80 +1,46 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
 
-// Correct compare function for qsort
-int compare(const void *a, const void *b) {
-    return (*(int *)a - *(int *)b);
-}
+int binarySearch(int arr[], int n, int target){
+    int start, end, mid;
+    int start = 0;
+    int mid = start + (end - start) / 2;
+    int length = sizeof(arr)/sizeof(arr[0]);
+    int end = arr[length];
 
-// Binary Search function
-int binary_search(int *arr, int n, int key) {
-    int low = 0, high = n - 1;
-
-    while (low <= high) {
-        int mid = low + (high - low) / 2;
-
-        if (key == arr[mid]) {
-            return mid;
-        } else if (key < arr[mid]) {
-            high = mid - 1;
-        } else {
-            low = mid + 1;
+    for (int i = 0; i < end; i++)
+    {
+        if (arr[i]==mid)
+        {
+            return i;
+        }
+        else if (arr[i]<arr[mid])
+        {
+            end = mid-1;
+        }
+        else {
+            start = mid + 1;
         }
     }
-
     return -1;
 }
 
-// Function to generate random array
-void random_array(int *arr, int n) {
-    for (int i = 0; i < n; i++) {
-        arr[i] = rand() % 1000; // Random numbers between 0–999
-    }
-}
-
-int main() {
-    int n, key, pos;
-    printf("Enter the number of elements you want in the array: ");
+int main(int argc, char const *argv[])
+{
+    int n, target;
+    
+    printf("Enter the number of elements: ");
     scanf("%d", &n);
-
-    int *arr = (int *)malloc(n * sizeof(int));
-    if (arr == NULL) {
-        printf("Memory allocation failed!\n");
-        return -1;
+    
+    int arr[n];
+    
+    printf("Enter %d elements: ", n);
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &arr[i]);
     }
+    
+    printf("Enter the element to search: ");
+    scanf("%d", &target);
 
-    // Generate random numbers
-    random_array(arr, n);
-
-    // Input element to search
-    printf("Enter the element you want to search: ");
-    scanf("%d", &key);
-
-    // Sort array before applying binary search
-    qsort(arr, n, sizeof(int), compare);
-
-    // Measure time for 10000 searches
-    clock_t start = clock();
-    for (int i = 0; i < 10000; i++) {
-        pos = binary_search(arr, n, key);
-    }
-    clock_t end = clock();
-
-    // Print search result
-    if (pos != -1) {
-        printf("Element found at index %d\n", pos);
-    } else {
-        printf("Element not found.\n");
-    }
-
-    // Time calculation (average per search)
-    double total_time = ((double)(end - start)) / CLOCKS_PER_SEC;
-    double avg_time = total_time / 10000.0;
-
-    printf("Total time for 10000 searches: %f seconds\n", total_time);
-    printf("Average time per search: %f seconds\n", avg_time);
-
-    free(arr);
+    binarySearch(arr,n,target);
     return 0;
 }
