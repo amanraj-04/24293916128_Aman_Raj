@@ -2,178 +2,182 @@
 #include <stdlib.h>
 #include <time.h>
 
-void add_matrix(int n,int** arr1, int** arr2, int** arr){
+// Function for standard matrix addition: C = A + B
+void add(int n, int A[][n], int B[][n], int C[][n])
+{
     for (int i = 0; i < n; i++)
-    {
         for (int j = 0; j < n; j++)
-        {
-            arr[i][j]=arr1[i][j]+arr2[i][j];
-        }
-    }
+            C[i][j] = A[i][j] + B[i][j]; // Element-wise addition
 }
 
-void add_matrix(int n,int** arr1, int** arr2, int** arr){
+// Function for standard matrix subtraction: C = A - B
+void subtract(int n, int A[][n], int B[][n], int C[][n])
+{
     for (int i = 0; i < n; i++)
-    {
         for (int j = 0; j < n; j++)
-        {
-            arr[i][j]=arr1[i][j]-arr2[i][j];
-        }
-    }
+            C[i][j] = A[i][j] - B[i][j]; // Element-wise subtraction
 }
 
-// Function to copy a sub-matrix from a larger matrix
-void copy_part(int n, int** from, int** to, int row_offset, int col_offset){
-    for (int i = 0; i < n; i++)
+// Strassen's algorithm implementation: C = A * B
+void strassen(int n, int A[][n], int B[][n], int C[][n])
+{
+    // Base case: If matrix size is 1x1, perform simple multiplication
+    if (n == 1)
     {
-        for (int j = 0; j < n; j++)
-        {
-            to[i][j]= from[i+row_offset][j+col_offset];
-        }
-    }
-}
-
-// Function to join a sub-matrix to a larger matrix
-void join_part(int n, int** from, int** to, int row_offset, int col_offset){
-    for (int i = 0; i < n; i++)
-    {
-        for (int j = 0; j < n; j++)
-        {
-            to[i+row_offset][j+col_offset]=from[i][j];
-        }
-    }
-}
-
-void strassen(int n, int** arr1, int** arr2, int** arr) {
-    // Base case: If the matrix is 1x1, perform a simple multiplication
-    if (n == 1) {
-        arr[0][0] = arr1[0][0] * arr2[0][0];
+        C[0][0] = A[0][0] * B[0][0];
         return;
     }
 
-    int sub_size = n / 2;
-    
-    // Dynamically allocate memory for the sub-matrices and temporary product matrices
-    // A, B, C are partitioned into four sub-matrices each (A11, A12, etc.)
-    // M1 to M7 are the seven temporary product matrices for Strassen's algorithm
-    int** A11 = (int**)malloc(sub_size * sizeof(int*));
-    int** A12 = (int**)malloc(sub_size * sizeof(int*));
-    int** A21 = (int**)malloc(sub_size * sizeof(int*));
-    int** A22 = (int**)malloc(sub_size * sizeof(int*));
-    int** B11 = (int**)malloc(sub_size * sizeof(int*));
-    int** B12 = (int**)malloc(sub_size * sizeof(int*));
-    int** B21 = (int**)malloc(sub_size * sizeof(int*));
-    int** B22 = (int**)malloc(sub_size * sizeof(int*));
-    int** M1 = (int**)malloc(sub_size * sizeof(int*));
-    int** M2 = (int**)malloc(sub_size * sizeof(int*));
-    int** M3 = (int**)malloc(sub_size * sizeof(int*));
-    int** M4 = (int**)malloc(sub_size * sizeof(int*));
-    int** M5 = (int**)malloc(sub_size * sizeof(int*));
-    int** M6 = (int**)malloc(sub_size * sizeof(int*));
-    int** M7 = (int**)malloc(sub_size * sizeof(int*));
-    int** temp1 = (int**)malloc(sub_size * sizeof(int*));
-    int** temp2 = (int**)malloc(sub_size * sizeof(int*));
+    // Calculate the size of the sub-matrices
+    int mid = n / 2;
 
-    // Allocate memory for each row of the sub-matrices
-    for (int i = 0; i < sub_size; i++) {
-        A11[i] = (int*)malloc(sub_size * sizeof(int));
-        A12[i] = (int*)malloc(sub_size * sizeof(int));
-        A21[i] = (int*)malloc(sub_size * sizeof(int));
-        A22[i] = (int*)malloc(sub_size * sizeof(int));
-        B11[i] = (int*)malloc(sub_size * sizeof(int));
-        B12[i] = (int*)malloc(sub_size * sizeof(int));
-        B21[i] = (int*)malloc(sub_size * sizeof(int));
-        B22[i] = (int*)malloc(sub_size * sizeof(int));
-        M1[i] = (int*)malloc(sub_size * sizeof(int));
-        M2[i] = (int*)malloc(sub_size * sizeof(int));
-        M3[i] = (int*)malloc(sub_size * sizeof(int));
-        M4[i] = (int*)malloc(sub_size * sizeof(int));
-        M5[i] = (int*)malloc(sub_size * sizeof(int));
-        M6[i] = (int*)malloc(sub_size * sizeof(int));
-        M7[i] = (int*)malloc(sub_size * sizeof(int));
-        temp1[i] = (int*)malloc(sub_size * sizeof(int));
-        temp2[i] = (int*)malloc(sub_size * sizeof(int));
-    }
+    // Allocate memory for 4 quadrants of A, 4 of B, 4 of C, and the 7 recursive products (P..V)
+    int A11[mid][mid], A12[mid][mid], A21[mid][mid], A22[mid][mid];
+    int B11[mid][mid], B12[mid][mid], B21[mid][mid], B22[mid][mid];
+    int C11[mid][mid], C12[mid][mid], C21[mid][mid], C22[mid][mid];
+    // P=M1, Q=M2, R=M3, S=M4, T=M5, U=M6, V=M7 (The seven recursive products)
+    int P[mid][mid], Q[mid][mid], R[mid][mid], S[mid][mid], T[mid][mid], U[mid][mid], V[mid][mid];
+    int T1[mid][mid], T2[mid][mid]; // Temporary matrices for addition/subtraction results
 
-    // Partition the main matrices A and B into their four sub-matrices
-    copy_part(sub_size, arr1, A11, 0, 0);
-    copy_part(sub_size, arr1, A12, 0, sub_size);
-    copy_part(sub_size, arr1, A21, sub_size, 0);
-    copy_part(sub_size, arr1, A22, sub_size, sub_size);
+    // Partition A and B into their four n/2 x n/2 sub-matrices
+    for (int i = 0; i < mid; i++)
+        for (int j = 0; j < mid; j++)
+        {
+            // Top-Left Quadrant
+            A11[i][j] = A[i][j];
+            B11[i][j] = B[i][j];
+            // Top-Right Quadrant
+            A12[i][j] = A[i][j + mid];
+            B12[i][j] = B[i][j + mid];
+            // Bottom-Left Quadrant
+            A21[i][j] = A[i + mid][j];
+            B21[i][j] = B[i + mid][j];
+            // Bottom-Right Quadrant
+            A22[i][j] = A[i + mid][j + mid];
+            B22[i][j] = B[i + mid][j + mid];
+        }
 
-    copy_part(sub_size, arr2, B11, 0, 0);
-    copy_part(sub_size, arr2, B12, 0, sub_size);
-    copy_part(sub_size, arr2, B21, sub_size, 0);
-    copy_part(sub_size, arr2, B22, sub_size, sub_size);
+    // --- Calculate the seven products (P to V) recursively ---
 
-    // Calculate the seven products M1 to M7 using recursive calls
-    // M1 = (A11 + A22) * (B11 + B22)
-    add_matrix(sub_size, A11, A22, temp1);
-    add_matrix(sub_size, B11, B22, temp2);
-    strassen(sub_size, temp1, temp2, M1);
+    // P (M1) = (A11 + A22) * (B11 + B22)
+    add(mid, A11, A22, T1);     // T1 = A11 + A22
+    add(mid, B11, B22, T2);     // T2 = B11 + B22
+    strassen(mid, T1, T2, P);   // P = T1 * T2 (recursive call)
 
-    // M2 = (A21 + A22) * B11
-    add_matrix(sub_size, A21, A22, temp1);
-    strassen(sub_size, temp1, B11, M2);
+    // Q (M2) = (A21 + A22) * B11
+    add(mid, A21, A22, T1);     // T1 = A21 + A22
+    strassen(mid, T1, B11, Q);  // Q = T1 * B11
 
-    // M3 = A11 * (B12 - B22)
-    subtract_matrix(sub_size, B12, B22, temp1);
-    strassen(sub_size, A11, temp1, M3);
+    // R (M3) = A11 * (B12 - B22)
+    subtract(mid, B12, B22, T1); // T1 = B12 - B22
+    strassen(mid, A11, T1, R);  // R = A11 * T1
 
-    // M4 = A22 * (B21 - B11)
-    subtract_matrix(sub_size, B21, B11, temp1);
-    strassen(sub_size, A22, temp1, M4);
+    // S (M4) = A22 * (B21 - B11)
+    subtract(mid, B21, B11, T1); // T1 = B21 - B11
+    strassen(mid, A22, T1, S);  // S = A22 * T1
 
-    // M5 = (A11 + A12) * B22
-    add_matrix(sub_size, A11, A12, temp1);
-    strassen(sub_size, temp1, B22, M5);
+    // T (M5) = (A11 + A12) * B22
+    add(mid, A11, A12, T1);     // T1 = A11 + A12
+    strassen(mid, T1, B22, T);  // T = T1 * B22
 
-    // M6 = (A21 - A11) * (B11 + B12)
-    subtract_matrix(sub_size, A21, A11, temp1);
-    add_matrix(sub_size, B11, B12, temp2);
-    strassen(sub_size, temp1, temp2, M6);
+    // U (M6) = (A21 - A11) * (B11 + B12)
+    subtract(mid, A21, A11, T1); // T1 = A21 - A11
+    add(mid, B11, B12, T2);     // T2 = B11 + B12
+    strassen(mid, T1, T2, U);   // U = T1 * T2
 
-    // M7 = (A12 - A22) * (B21 + B22)
-    subtract_matrix(sub_size, A12, A22, temp1);
-    add_matrix(sub_size, B21, B22, temp2);
-    strassen(sub_size, temp1, temp2, M7);
+    // V (M7) = (A12 - A22) * (B21 + B22)
+    subtract(mid, A12, A22, T1); // T1 = A12 - A22
+    add(mid, B21, B22, T2);     // T2 = B21 + B22
+    strassen(mid, T1, T2, V);   // V = T1 * T2
 
-    // Calculate the four resulting sub-matrices C11, C12, C21, C22
-    // C11 = M1 + M4 - M5 + M7
-    add_matrix(sub_size, M1, M4, temp1);
-    subtract_matrix(sub_size, temp1, M5, temp2);
-    add_matrix(sub_size, temp2, M7, A11); // Reuse A11 as a temporary storage for C11
-    
-    // C12 = M3 + M5
-    add_matrix(sub_size, M3, M5, A12); // Reuse A12 for C12
-    
-    // C21 = M2 + M4
-    add_matrix(sub_size, M2, M4, A21); // Reuse A21 for C21
+    // --- Calculate the four result quadrants (C11, C12, C21, C22) using P..V ---
 
-    // C22 = M1 - M2 + M3 + M6
-    subtract_matrix(sub_size, M1, M2, temp1);
-    add_matrix(sub_size, temp1, M3, temp2);
-    add_matrix(sub_size, temp2, M6, A22); // Reuse A22 for C22
+    // C11 = P (M1) + S (M4) - T (M5) + V (M7)
+    add(mid, P, S, T1);          // T1 = P + S
+    subtract(mid, T1, T, T2);    // T2 = T1 - T
+    add(mid, T2, V, C11);        // C11 = T2 + V
 
-    // Join the four result sub-matrices into the final matrix C
-    join_part(sub_size, A11, arr, 0, 0);
-    join_part(sub_size, A12, arr, 0, sub_size);
-    join_part(sub_size, A21, arr, sub_size, 0);
-    join_part(sub_size, A22, arr, sub_size, sub_size);
+    // C12 = R (M3) + T (M5)
+    add(mid, R, T, C12);
 
-    // Free the dynamically allocated memory for all temporary matrices to prevent leaks
-    for (int i = 0; i < sub_size; i++) {
-        free(A11[i]); free(A12[i]); free(A21[i]); free(A22[i]);
-        free(B11[i]); free(B12[i]); free(B21[i]); free(B22[i]);
-        free(M1[i]); free(M2[i]); free(M3[i]); free(M4[i]);
-        free(M5[i]); free(M6[i]); free(M7[i]);
-        free(temp1[i]); free(temp2[i]);
-    }
-    free(A11); free(A12); free(A21); free(A22);
-    free(B11); free(B12); free(B21); free(B22);
-    free(M1); free(M2); free(M3); free(M4);
-    free(M5); free(M6); free(M7);
-    free(temp1); free(temp2);
+    // C21 = Q (M2) + S (M4)
+    add(mid, Q, S, C21);
+
+    // C22 = P (M1) - Q (M2) + R (M3) + U (M6)
+    subtract(mid, P, Q, T1);     // T1 = P - Q
+    add(mid, T1, R, T2);         // T2 = T1 + R
+    add(mid, T2, U, C22);        // C22 = T2 + U
+
+    // Join the four result quadrants (C11, C12, C21, C22) back into the final matrix C
+    for (int i = 0; i < mid; i++)
+        for (int j = 0; j < mid; j++)
+        {
+            C[i][j] = C11[i][j];             // Place C11 (Top-Left)
+            C[i][j + mid] = C12[i][j];       // Place C12 (Top-Right)
+            C[i + mid][j] = C21[i][j];       // Place C21 (Bottom-Left)
+            C[i + mid][j + mid] = C22[i][j]; // Place C22 (Bottom-Right)
+        }
 }
 
+int main()
+{
+    // Initialize random seed for random matrix generation
+    srand(time(NULL));
+    
+    // Open file to write execution times
+    FILE *fp = fopen("strassen.txt", "w");
+    if (!fp)
+        return 1; // Exit if file cannot be opened
 
+    // Array of matrix sizes to test (must be powers of 2 for this version)
+    int sizes[] = {2, 4, 8, 16, 32, 64, 128, 256};
+    int num = sizeof(sizes) / sizeof(sizes[0]);
+    int trials = 5; // Number of times to run each size for averaging
+
+    for (int s = 0; s < num; s++)
+    {
+        int n = sizes[s];
+        // Allocate dynamic memory for the n x n matrices A, B, and C (using VLA syntax with malloc)
+        int (*A)[n] = malloc(sizeof(int[n][n]));
+        int (*B)[n] = malloc(sizeof(int[n][n]));
+        int (*C)[n] = malloc(sizeof(int[n][n]));
+        if (!A || !B || !C) // Check for failed allocation
+            continue;
+
+        double total = 0.0;
+        
+        // Run multiple trials to get a stable time average
+        for (int t = 0; t < trials; t++)
+        {
+            // Initialize matrices A and B with random values (0-9)
+            for (int i = 0; i < n; i++)
+                for (int j = 0; j < n; j++)
+                {
+                    A[i][j] = rand() % 10;
+                    B[i][j] = rand() % 10;
+                }
+            
+            // Start timing
+            clock_t start = clock();
+            strassen(n, A, B, C); // Run Strassen's multiplication
+            clock_t end = clock();
+            
+            // Accumulate total time in seconds
+            total += (double)(end - start) / CLOCKS_PER_SEC;
+        }
+        
+        // Calculate and print the average time
+        double avg = total / trials;
+        printf("%d x %d -> %.9f sec\n", n, n, avg);
+        
+        // Write the size and average time to the file
+        fprintf(fp, "%d %.9f\n", n, avg);
+        
+        // Free dynamically allocated memory
+        free(A);
+        free(B);
+        free(C);
+    }
+    fclose(fp); // Close the file
+    return 0;
+}
